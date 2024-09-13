@@ -23,20 +23,28 @@ from bs4 import BeautifulSoup
 from apps.authentication.util import verify_pass
 import os
 import json
-import openai
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
-from llamaapi import LlamaAPI
 from meta_ai_api import MetaAI
+from webdriver_manager.chrome import ChromeDriverManager
 
 cookies_file = 'cookies.json'
-chrome_options = Options()
+# chrome_options = Options()
+# chrome_options.add_argument("--headless")  # Run in headless mode (no GUI)
+# chrome_options.add_argument("--no-sandbox")
+# chrome_options.add_argument("--disable-dev-shm-usage")
+# # Initialize the Chrome WebDriver
+# chromedriver_path = "D:\\Z\\free-flask-datta-able-master\\LinkedInPost\\apps\\authentication\\chromedriver.exe"
+# # 
+# driver = webdriver.Chrome(executable_path=chromedriver_path, options=chrome_options)
+
+chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("--headless")  # Run in headless mode (no GUI)
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
-# Initialize the Chrome WebDriver
-chromedriver_path = "D:\\Z\\free-flask-datta-able-master\\LinkedInPost\\apps\\authentication\\chromedriver.exe"
-# 
-driver = webdriver.Chrome(executable_path=chromedriver_path, options=chrome_options)
+
+# Use ChromeDriverManager to handle the driver
+service = Service(ChromeDriverManager().install())
+driver = webdriver.Chrome(service=service, options=chrome_options)
 
 
 
@@ -78,7 +86,6 @@ def login_to_linkedin(username, password):
     loginbutton.click()
     #time.sleep(3)
     save_cookies(cookies_file)
-    save_to_local_storage(driver, email, password)
     
     try:
         
@@ -108,8 +115,6 @@ def getProfileAnalytics(url):
     response = ai.prompt(message="Rewrite linkedin post that you are provided to increase the engagement and impressions. engagement and impressions are "+str(impressions)+" \n\n and post is:"+str(post))
     return impressions, engagements, post, response
 
-# OpenAI Api key
-# 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
 def getProfilePosts():
     time.sleep(1)
     driver.get("https://www.linkedin.com/in/me/recent-activity/all/")
@@ -138,7 +143,7 @@ def getProfilePosts():
         post_data['comments'] = post.find('span', class_='social-details-social-counts__reactions-count')
         post_data['likes'] = post.find('span', class_='social-details-social-counts__reactions-count')
         post_data['analytics'] = post.find('div', class_='content-analytics-entry-point')
-        print("post_data: ",post_data)
+        
         # post_data['likes'] = ''
         # post_data['comments'] = []
         # comment_elements = post.find_all('li', class_='social-details-social-counts__item')

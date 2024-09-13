@@ -27,16 +27,25 @@ from bs4 import BeautifulSoup
 from apps.authentication.util import verify_pass
 import os
 import json
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
 
 
-chrome_options = Options()
+# chrome_options = Options()
+
+# # Initialize the Chrome WebDriver
+# chromedriver_path = "D:\\Z\\free-flask-datta-able-master\\LinkedInPost\\apps\\authentication\\chromedriver.exe"
+
+# driver = webdriver.Chrome(executable_path=chromedriver_path, options=chrome_options)
+
+chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("--headless")  # Run in headless mode (no GUI)
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
-# Initialize the Chrome WebDriver
-chromedriver_path = "D:\\Z\\free-flask-datta-able-master\\LinkedInPost\\apps\\authentication\\chromedriver.exe"
+# Use ChromeDriverManager to handle the driver
+service = Service(ChromeDriverManager().install())
+driver = webdriver.Chrome(service=service, options=chrome_options)
 
-driver = webdriver.Chrome(executable_path=chromedriver_path, options=chrome_options)
 
 @blueprint.route('/')
 def route_default():
