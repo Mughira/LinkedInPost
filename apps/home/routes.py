@@ -121,6 +121,7 @@ def getProfilePosts():
 
     # Scroll down to load all posts
     prev_height = driver.execute_script("return document.body.scrollHeight")
+    scrollCount = 1
     while True:
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(1)
@@ -128,6 +129,9 @@ def getProfilePosts():
         if new_height == prev_height:
             break
         prev_height = new_height
+        scrollCount = scrollCount + 1
+        if scrollCount > 15:
+            break
     print("Waiting for page to load...")
     time.sleep(3)
     print("Done loading...")

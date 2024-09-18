@@ -79,6 +79,11 @@ def save_to_local_storage(driver, username, password):
     driver.execute_script(f"localStorage.setItem('username', '{username}');")
     driver.execute_script(f"localStorage.setItem('password', '{password}');")
 
+def otp_function():
+    # Simulate fetching OTP, for example from SMS or email
+    otp = input("Please enter the OTP: ")
+    return otp
+
 def login_to_linkedin(username, password):
     # Set up Chrome options for headless mode
     if os.path.exists(cookies_file):
@@ -103,19 +108,30 @@ def login_to_linkedin(username, password):
         loginbutton = driver.find_element(by=By.XPATH, value="//button[@type='submit']")
         loginbutton.click()
         #time.sleep(3)
-        save_cookies(cookies_file)
         save_to_local_storage(driver, email, password)
     
     try:
-        
+        # 
         # Wait for the feed page to load
         #time.sleep(5)
         print("driver.current_url: ",driver.current_url)
         
+        # Check if OTP is required
+        if "checkpoint/challenge" in driver.current_url:
+            print("OTP required...")
+            otp_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "input__phone_verification_pin")))
+            # Call the otp_function to retrieve OTP (e.g., from an SMS or authenticator)
+            otp_code = otp_function()
+            otp_input.send_keys(otp_code)
+            submit_otp = driver.find_element(by=By.XPATH, value="//button[@type='submit']")
+            submit_otp.click()
+            time.sleep(3)
+        print("driver.current_url: ",driver.current_url)
         # Check if login is successful
         if "feed" not in driver.current_url:
             return None, "Login failed"
         
+        save_cookies(cookies_file)
         return driver, "Login successful"
     
     except Exception as e:
