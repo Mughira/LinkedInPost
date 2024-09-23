@@ -26,29 +26,58 @@ import json
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from meta_ai_api import MetaAI
 from webdriver_manager.chrome import ChromeDriverManager
+import psutil
 
 cookies_file = 'cookies.json'
-# chrome_options = Options()
+# # chrome_options = Options()
+# # chrome_options.add_argument("--headless")  # Run in headless mode (no GUI)
+# # chrome_options.add_argument("--no-sandbox")
+# # chrome_options.add_argument("--disable-dev-shm-usage")
+# # # Initialize the Chrome WebDriver
+# # chromedriver_path = "D:\\Z\\free-flask-datta-able-master\\LinkedInPost\\apps\\authentication\\chromedriver.exe"
+# # # 
+# # driver = webdriver.Chrome(executable_path=chromedriver_path, options=chrome_options)
+
+# chrome_options = webdriver.ChromeOptions()
 # chrome_options.add_argument("--headless")  # Run in headless mode (no GUI)
 # chrome_options.add_argument("--no-sandbox")
 # chrome_options.add_argument("--disable-dev-shm-usage")
-# # Initialize the Chrome WebDriver
-# chromedriver_path = "D:\\Z\\free-flask-datta-able-master\\LinkedInPost\\apps\\authentication\\chromedriver.exe"
-# # 
-# driver = webdriver.Chrome(executable_path=chromedriver_path, options=chrome_options)
 
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument("--headless")  # Run in headless mode (no GUI)
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--disable-dev-shm-usage")
-
-# Use ChromeDriverManager to handle the driver
-service = Service(ChromeDriverManager().install())
-driver = webdriver.Chrome(service=service, options=chrome_options)
+# # Use ChromeDriverManager to handle the driver
+# service = Service(ChromeDriverManager().install())
+# driver = webdriver.Chrome(service=service, options=chrome_options)
 
 
 
+def get_chrome_driver():
+    # Define Chrome options
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument("--headless")  # Run in headless mode (no GUI)
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--remote-debugging-port=9222")  # Debug port
 
+    # Use ChromeDriverManager to handle the driver
+    service = Service(ChromeDriverManager().install())
+
+    return webdriver.Chrome(service=service, options=chrome_options)
+
+
+def is_chrome_running():
+    """Check if Chrome is already running with the debug port."""
+    for proc in psutil.process_iter(['pid', 'name']):
+        if proc.info['name'] == 'chrome.exe' and '--remote-debugging-port=9222' in proc.cmdline():
+            return True
+    return False
+
+if is_chrome_running():
+    # If Chrome is already running, connect to it
+    driver = webdriver.ChromeOptions()
+    driver.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+    driver = webdriver.Chrome(options=driver)
+else:
+    # If not, launch a new instance
+    driver = get_chrome_driver()
 
 def load_cookies():
     if os.path.exists(cookies_file):
@@ -103,6 +132,15 @@ def login_to_linkedin(username, password):
         return None, f"An error occurred: {str(e)}"
 
 def getProfileAnalytics(url):
+    # Set up Chrome options for headless mode
+    # if is_chrome_running():
+    #     # If Chrome is already running, connect to it
+    #     driver = webdriver.ChromeOptions()
+    #     driver.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+    #     driver = webdriver.Chrome(options=driver)
+    # else:
+    #     # If not, launch a new instance
+    #     driver = get_chrome_driver()
     time.sleep(1)
     driver.get("https://www.linkedin.com/analytics/post-summary/urn:li:activity:"+url+"/")
     source = BeautifulSoup(driver.page_source, 'html.parser')
@@ -116,6 +154,16 @@ def getProfileAnalytics(url):
     return impressions, engagements, post, response
 
 def getProfilePosts():
+
+        # Set up Chrome options for headless mode
+    # if is_chrome_running():
+    #     # If Chrome is already running, connect to it
+    #     driver = webdriver.ChromeOptions()
+    #     driver.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+    #     driver = webdriver.Chrome(options=driver)
+    # else:
+    #     # If not, launch a new instance
+    #     driver = get_chrome_driver()
     time.sleep(1)
     driver.get("https://www.linkedin.com/in/me/recent-activity/all/")
 
@@ -160,6 +208,8 @@ def getProfilePosts():
 
 @blueprint.route('/index')
 def index():
+    # Set up Chrome options for headless mode
+
     driver.get("https://www.linkedin.com")
     time.sleep(2)
     load_cookies()
@@ -172,6 +222,15 @@ def index():
 @blueprint.route('/analytics/post-summary/urn:li:activity:<string:id>/', methods=['GET'])
 def post_summary(id):
     print("Dynamic ID:", id)
+    # Set up Chrome options for headless mode
+    # if is_chrome_running():
+    #     # If Chrome is already running, connect to it
+    #     driver = webdriver.ChromeOptions()
+    #     driver.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+    #     driver = webdriver.Chrome(options=driver)
+    # else:
+    #     # If not, launch a new instance
+    #     driver = get_chrome_driver()
     driver.get("https://www.linkedin.com")
     load_cookies()
     driver.refresh()

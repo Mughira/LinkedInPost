@@ -15,20 +15,28 @@ from apps import db, login_manager
 from apps.authentication import blueprint
 from apps.authentication.forms import LoginForm, CreateAccountForm
 from apps.authentication.models import Users
+
+import time
+from bs4 import BeautifulSoup
+from apps.authentication.util import verify_pass
+import os
+import json
+
+
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
-import time
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from bs4 import BeautifulSoup
-from apps.authentication.util import verify_pass
-import os
-import json
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
+
+
+from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+import psutil
 
 
 # chrome_options = Options()
@@ -38,13 +46,36 @@ from selenium.webdriver.chrome.service import Service
 
 # driver = webdriver.Chrome(executable_path=chromedriver_path, options=chrome_options)
 
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument("--headless")  # Run in headless mode (no GUI)
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--disable-dev-shm-usage")
-# Use ChromeDriverManager to handle the driver
-service = Service(ChromeDriverManager().install())
-driver = webdriver.Chrome(service=service, options=chrome_options)
+# chrome_options = webdriver.ChromeOptions()
+# chrome_options.add_argument("--headless")  # Run in headless mode (no GUI)
+# chrome_options.add_argument("--no-sandbox")
+# chrome_options.add_argument("--disable-dev-shm-usage")
+# # Use ChromeDriverManager to handle the driver
+# service = Service(ChromeDriverManager().install())
+# driver = webdriver.Chrome(service=service, options=chrome_options)
+
+
+def get_chrome_driver():
+    # Define Chrome options
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument("--headless")  # Run in headless mode (no GUI)
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--remote-debugging-port=9222")  # Debug port
+
+    # Use ChromeDriverManager to handle the driver
+    service = Service(ChromeDriverManager().install())
+
+    return webdriver.Chrome(service=service, options=chrome_options)
+
+
+def is_chrome_running():
+    """Check if Chrome is already running with the debug port."""
+    for proc in psutil.process_iter(['pid', 'name']):
+        if proc.info['name'] == 'chrome.exe' and '--remote-debugging-port=9222' in proc.cmdline():
+            return True
+    return False
+
 
 
 @blueprint.route('/')
@@ -86,6 +117,14 @@ def otp_function():
 
 def login_to_linkedin(username, password):
     # Set up Chrome options for headless mode
+    if is_chrome_running():
+        # If Chrome is already running, connect to it
+        driver = webdriver.ChromeOptions()
+        driver.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+        driver = webdriver.Chrome(options=driver)
+    else:
+        # If not, launch a new instance
+        driver = get_chrome_driver()
     if os.path.exists(cookies_file):
         print("Loading cookies...")
         driver.get("https://www.linkedin.com")
